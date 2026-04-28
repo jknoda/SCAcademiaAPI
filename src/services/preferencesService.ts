@@ -42,12 +42,21 @@ export class PreferencesService {
     return email.trim().toLowerCase();
   }
 
+  private requiresSsl(dbUri: string): boolean {
+    try {
+      const { hostname } = new URL(dbUri)
+      return hostname !== 'localhost' && hostname !== '127.0.0.1'
+    } catch {
+      return false
+    }
+  }
+
   constructor(connectionString: string) {
     this.db = knex({
       client: 'pg',
       connection: {
         connectionString,
-        ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+        ssl: this.requiresSsl(connectionString) ? { rejectUnauthorized: false } : false,
       },
     });
   }

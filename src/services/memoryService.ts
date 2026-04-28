@@ -10,9 +10,18 @@ export type MemoryService = {
     store: PostgresStore
 }
 
+function requiresSsl(dbUri: string): boolean {
+    try {
+        const { hostname } = new URL(dbUri)
+        return hostname !== 'localhost' && hostname !== '127.0.0.1'
+    } catch {
+        return false
+    }
+}
+
 export async function createMemoryService(): Promise<MemoryService> {
     const dbUri = config.memory.dbUri
-    const sslConfig = process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined
+    const sslConfig = requiresSsl(dbUri) ? { rejectUnauthorized: false } : undefined
     const poolConfig: pg.PoolConfig = { connectionString: dbUri, ssl: sslConfig }
 
     const checkpointer = new PostgresSaver(new Pool(poolConfig))
