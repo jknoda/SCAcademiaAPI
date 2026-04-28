@@ -27,9 +27,7 @@ export const config: ModelConfig = {
   httpReferer: '',
   xTitle: 'IA Devs - Prompt Chaining Article Generator',
   models: [
-    //'arcee-ai/trinity-large-preview:free',
-    //'google/gemma-4-31b-it:free',
-    'meta-llama/llama-3.1-8b-instruct',
+    process.env.LLM_MODEL! ? process.env.LLM_MODEL : 'meta-llama/llama-3.1-8b-instruct'
   ],
   provider: {
     sort: {
@@ -37,9 +35,9 @@ export const config: ModelConfig = {
       partition: 'none',
     },
   },
-  temperature: 0.7,
+  temperature: process.env.LLM_TEMPERATURE ? parseFloat(process.env.LLM_TEMPERATURE) : 0.7,
   memory: {
     dbUri: process.env.DATABASE_URL!,
   },
-  maxMessagesToSummary: 2
+  maxMessagesToSummary: process.env.MAX_MESSAGES_TO_SUMMARY ? parseInt(process.env.MAX_MESSAGES_TO_SUMMARY) : 4,
 };
