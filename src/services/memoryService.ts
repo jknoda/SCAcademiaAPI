@@ -13,12 +13,10 @@ export type MemoryService = {
 export async function createMemoryService(): Promise<MemoryService> {
     const dbUri = config.memory.dbUri
     const sslConfig = process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined
+    const poolConfig: pg.PoolConfig = { connectionString: dbUri, ssl: sslConfig }
 
-    const checkerPool = new Pool({ connectionString: dbUri, ssl: sslConfig })
-    const storePool = new Pool({ connectionString: dbUri, ssl: sslConfig })
-
-    const checkpointer = new PostgresSaver(checkerPool)
-    const store = new PostgresStore({ connectionOptions: storePool })
+    const checkpointer = new PostgresSaver(new Pool(poolConfig))
+    const store = new PostgresStore({ connectionOptions: poolConfig })
 
     await store.setup()
     await checkpointer.setup()
