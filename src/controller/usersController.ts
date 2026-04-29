@@ -32,6 +32,7 @@ export async function handleUsersRoute(
     const existingUser = await context.preferencesService.getUserByEmail(email);
     if (existingUser) {
       await context.preferencesService.ensurePreferencesRecord(existingUser.userId);
+      const userSummary = await context.preferencesService.getSummary(existingUser.userId);
       const userContext = await context.preferencesService.getBasicInfo(existingUser.userId);
       const threadId = context.userThreads.get(existingUser.userId) || `${existingUser.userId}-${Date.now()}`;
 
@@ -44,9 +45,19 @@ export async function handleUsersRoute(
         userId: existingUser.userId,
         email: existingUser.email ?? null,
         threadId,
+        userProfile: userSummary
+          ? {
+            name: userSummary.name ?? null,
+            age: userSummary.age ?? null,
+            faixa: userSummary.faixa ?? null,
+            favoriteTechniques: userSummary.favoriteTechniques ?? [],
+            keyPreferences: userSummary.keyPreferences ?? null,
+            importantContext: userSummary.importantContext ?? null,
+          }
+          : null,
         userContext: userContext ?? null,
         hasContext: Boolean(userContext),
-        message: 'Usuário já existente para este email.',
+        message: 'Usuário já existente para este email. Contexto recuperado para continuar a conversa.',
       });
 
       return true;

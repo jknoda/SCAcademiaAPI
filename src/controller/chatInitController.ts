@@ -27,6 +27,12 @@ const INIT_MESSAGE_WITH_CONTEXT =
 const INIT_MESSAGE_WITHOUT_CONTEXT =
   'Olá! Me apresente de forma amigável e pergunte sobre meu email, nome, idade, faixa e preferências de técnicas e golpes de judô.';
 
+const RESUME_MESSAGE_WITH_CONTEXT =
+  'Retome a conversa de forma natural considerando o histórico e o contexto que você já sabe sobre mim.';
+
+const RESUME_MESSAGE_WITHOUT_CONTEXT =
+  'Retome a conversa de forma amigável com base no histórico e continue coletando dados úteis sobre mim.';
+
 export async function handleChatInitRoute(
   request: IncomingMessage,
   response: ServerResponse,
@@ -63,14 +69,16 @@ export async function handleChatInitRoute(
     return true;
   }
 
-  // Always create a fresh thread on init so each session starts clean.
-  const threadId = `${userId}-${Date.now()}`;
+  const existingThreadId = context.userThreads.get(userId);
+  const threadId = existingThreadId || `${userId}-${Date.now()}`;
   context.userThreads.set(userId, threadId);
 
   await context.preferencesService.ensurePreferencesRecord(userId);
 
   const userContext = await context.preferencesService.getBasicInfo(userId);
-  const initMessage = userContext ? INIT_MESSAGE_WITH_CONTEXT : INIT_MESSAGE_WITHOUT_CONTEXT;
+  const initMessage = existingThreadId
+    ? (userContext ? RESUME_MESSAGE_WITH_CONTEXT : RESUME_MESSAGE_WITHOUT_CONTEXT)
+    : (userContext ? INIT_MESSAGE_WITH_CONTEXT : INIT_MESSAGE_WITHOUT_CONTEXT);
 
   const result = await context.graph.invoke(
     {

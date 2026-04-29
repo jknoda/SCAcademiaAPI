@@ -322,6 +322,9 @@ export class PreferencesService {
     if (summary.keyPreferences) {
       parts.push(`\nPreferências: ${summary.keyPreferences}`);
     }
+    if (summary.importantContext) {
+      parts.push(`\nContexto Importante: ${summary.importantContext}`);
+    }
 
     return parts.length > 0 ? parts.join('\n') : undefined;
   }
