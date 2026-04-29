@@ -1,19 +1,45 @@
 import { type IncomingMessage, type ServerResponse } from 'node:http';
+import { handleAuthLoginRoute, handleAuthRefreshRoute } from './authController.ts';
 import { handleUsersRoute } from './usersController.ts';
 import { handleChatRoute } from './chatController.ts';
 import { handleChatInitRoute } from './chatInitController.ts';
 import { sendJson } from './httpUtils.ts';
-import { type ControllerContext } from './types.ts';
+import { type AuthenticatedRequest, type ControllerContext } from './types.ts';
+
+function isProtectedRoute(method: string, pathname: string, apiBasePath: string): boolean {
+  return method === 'POST' && [
+    `${apiBasePath}/users`,
+    `${apiBasePath}/chat/init`,
+    `${apiBasePath}/chat`,
+  ].includes(pathname);
+}
+
+function extractBearerToken(request: IncomingMessage): string | null {
+  const authorization = request.headers.authorization;
+
+  if (!authorization) {
+    return null;
+  }
+
+  const [scheme, token] = authorization.split(' ');
+  if (scheme?.toLowerCase() !== 'bearer' || !token?.trim()) {
+    return null;
+  }
+
+  return token.trim();
+}
 
 export function createApiController({
   graph,
   preferencesService,
+  authService,
   userThreads,
   apiBasePath,
 }: ControllerContext) {
   const context: ControllerContext = {
     graph,
     preferencesService,
+    authService,
     userThreads,
     apiBasePath,
   };
@@ -29,15 +55,34 @@ export function createApiController({
         return;
       }
 
-      if (await handleUsersRoute(request, response, context)) {
+      if (await handleAuthLoginRoute(request, response, context)) {
         return;
       }
 
-      if (await handleChatInitRoute(request, response, context)) {
+      if (await handleAuthRefreshRoute(request, response, context)) {
         return;
       }
 
-      if (await handleChatRoute(request, response, context)) {
+      let authenticatedRequest: AuthenticatedRequest | undefined;
+      if (isProtectedRoute(method, pathname, context.apiBasePath)) {
+        const accessToken = extractBearerToken(request);
+        if (!accessToken) {
+          sendJson(response, 401, { error: 'Authorization Bearer token é obrigatório.' });
+          return;
+        }
+
+        authenticatedRequest = await context.authService.authenticateAccessToken(accessToken);
+      }
+
+      if (await handleUsersRoute(request, response, context, authenticatedRequest)) {
+        return;
+      }
+
+      if (await handleChatInitRoute(request, response, context, authenticatedRequest)) {
+        return;
+      }
+
+      if (await handleChatRoute(request, response, context, authenticatedRequest)) {
         return;
       }
 

@@ -1,7 +1,25 @@
 import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { HumanMessage } from '@langchain/core/messages';
 import { parseJsonBody, sendJson } from './httpUtils.ts';
-import { type ControllerContext } from './types.ts';
+import { type AuthenticatedRequest, type ControllerContext } from './types.ts';
+
+async function authorizeUserAccess(
+  context: ControllerContext,
+  authenticatedRequest: AuthenticatedRequest | undefined,
+  userId: string,
+): Promise<string | null> {
+  const tokenEmail = authenticatedRequest?.tokenEmail?.trim().toLowerCase();
+  if (!tokenEmail) {
+    return null;
+  }
+
+  const linkedUser = await context.preferencesService.getUserByEmail(tokenEmail);
+  if (linkedUser && linkedUser.userId !== userId) {
+    return 'O userId informado não pertence ao usuário autenticado.';
+  }
+
+  return null;
+}
 
 const INIT_MESSAGE_WITH_CONTEXT =
   'Inicie a conversa de forma casual mencionando o que você sabe sobre mim e recomende um golpe de judô a ser treinado!';
@@ -13,6 +31,7 @@ export async function handleChatInitRoute(
   request: IncomingMessage,
   response: ServerResponse,
   context: ControllerContext,
+  authenticatedRequest?: AuthenticatedRequest,
 ): Promise<boolean> {
   const method = request.method ?? 'GET';
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
@@ -27,6 +46,12 @@ export async function handleChatInitRoute(
 
   if (!userId) {
     sendJson(response, 400, { error: 'Campo userId é obrigatório.' });
+    return true;
+  }
+
+  const authorizationError = await authorizeUserAccess(context, authenticatedRequest, userId);
+  if (authorizationError) {
+    sendJson(response, 403, { error: authorizationError });
     return true;
   }
 

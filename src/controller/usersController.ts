@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { parseJsonBody, sendJson } from './httpUtils.ts';
-import { type ControllerContext } from './types.ts';
+import { type AuthenticatedRequest, type ControllerContext } from './types.ts';
 
 export async function handleUsersRoute(
   request: IncomingMessage,
   response: ServerResponse,
   context: ControllerContext,
+  authenticatedRequest?: AuthenticatedRequest,
 ): Promise<boolean> {
   const method = request.method ?? 'GET';
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
@@ -17,7 +18,15 @@ export async function handleUsersRoute(
   }
 
   const body = await parseJsonBody(request);
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const requestedEmail = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const tokenEmail = authenticatedRequest?.tokenEmail?.trim().toLowerCase() ?? '';
+
+  if (requestedEmail && tokenEmail && requestedEmail !== tokenEmail) {
+    sendJson(response, 403, { error: 'O email informado difere do email autenticado.' });
+    return true;
+  }
+
+  const email = requestedEmail || tokenEmail;
 
   if (email) {
     const existingUser = await context.preferencesService.getUserByEmail(email);
