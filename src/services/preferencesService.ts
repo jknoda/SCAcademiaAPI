@@ -143,18 +143,6 @@ export class PreferencesService {
       .ignore();
   }
 
-  async linkEmailToUser(userId: string, email: string): Promise<void> {
-    await this.setup();
-
-    if (!email.trim()) return;
-
-    const normalizedEmail = this.normalizeEmail(email);
-
-    await this.db('user_accounts')
-      .where({ user_id: userId })
-      .update({ email: normalizedEmail });
-  }
-
   async userExists(userId: string): Promise<boolean> {
     await this.setup();
 
@@ -190,14 +178,6 @@ export class PreferencesService {
         userId = prefs.name.toLowerCase().replace(/\s+/g, '_');
       } else if (userId === 'anonymous') {
         return;
-      }
-    }
-
-    if (prefs.email) {
-      try {
-        await this.linkEmailToUser(userId, prefs.email);
-      } catch {
-        // Keep conversation flow working even if email cannot be linked in this step.
       }
     }
 
@@ -238,14 +218,6 @@ export class PreferencesService {
         userId = summary.name.toLowerCase().replace(/\s+/g, '_');
       } else if (userId === 'anonymous') {
         return;
-      }
-    }
-
-    if (summary.email) {
-      try {
-        await this.linkEmailToUser(userId, summary.email);
-      } catch {
-        // Keep conversation flow working even if email cannot be linked in this step.
       }
     }
 

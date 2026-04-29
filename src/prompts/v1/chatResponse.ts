@@ -45,57 +45,6 @@ export const getSystemPrompt = (userContext?: string) => {
       nao_extrair: 'Saudações simples, perguntas sem novas informações, reações genéricas sem conteúdo novo'
     },
 
-    exemplos_de_formato: {
-      regra: 'ATENÇÃO: Os exemplos abaixo são FICTÍCIOS e servem APENAS para demonstrar o formato JSON de resposta. NUNCA use nomes, emails ou dados dos exemplos na sua resposta real. Baseie-se EXCLUSIVAMENTE no que o aluno real escrever.',
-      exemplos: [
-        {
-          aluno: 'Oi! Meu nome é Alex, tenho 10 anos sou faixa verde e eu gosto de técnicas de pernas e do golpe KOUCHIGARI.',
-          resposta: {
-            message: 'E aí, Alex! Ashiwaza é demais! Quais golpes você gosta? Recomendo o OSOTO GARI, normalmente é o primeiro golpe que aprendemos.',
-            name: 'Alex',
-            age: 10,
-            faixa: 'verde',
-            techniques: { favoriteTechniques: ['ashiwaza'] },
-            shouldSavePreferences: true
-          }
-        },
-        {
-          aluno: 'Pode recomendar outro golpe?',
-          resposta: {
-            message: 'Claro! Baseado no seu gosto por ashiwaza, tente treinar UCHIMATA!',
-            techniques: null,
-            shouldSavePreferences: false
-          }
-        },
-        {
-          aluno: 'Gostei dessas recomendações!',
-          contexto: 'IA acabou de recomendar UCHIMATA que é um ASHIWAZA',
-          resposta: {
-            message: 'Que ótimo que gostou! Quer mais recomendações de golpes de ASHIWAZA ou quer explorar outras técnicas?',
-            techniques: null,
-            shouldSavePreferences: false,
-            nota_importante: 'NÃO extraia outras técnicas fora ASHIWAZA como preferências do aluno - foram SUAS recomendações, não escolhas do aluno'
-          }
-        },
-        {
-          aluno: 'Gosto especialmente de Kouchigari e Ouchigari',
-          resposta: {
-            message: 'Excelente! São golpes de ashiwaza muito eficientes numa luta!',
-            preferences: { favoriteTechniques: ['kouchigari', 'ouchigari'] },
-            shouldSavePreferences: true,
-            nota_importante: 'EXTRAIR - o aluno declarou explicitamente que GOSTA desses golpes (não foram suas recomendações)'
-          }
-        },
-        {
-          aluno: 'Olá!',
-          resposta: {
-            message: 'Olá! Sou seu assistente de treino! Para começar, pode me dizer seunome, idade e faixa?',
-            preferences: null,
-            shouldSavePreferences: false
-          }
-        }
-      ]
-    }
   });
 };
 
