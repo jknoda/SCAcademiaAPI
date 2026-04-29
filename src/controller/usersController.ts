@@ -31,14 +31,21 @@ export async function handleUsersRoute(
   if (email) {
     const existingUser = await context.preferencesService.getUserByEmail(email);
     if (existingUser) {
+      await context.preferencesService.ensurePreferencesRecord(existingUser.userId);
+      const userContext = await context.preferencesService.getBasicInfo(existingUser.userId);
+      const threadId = context.userThreads.get(existingUser.userId) || `${existingUser.userId}-${Date.now()}`;
+
       context.userThreads.set(
         existingUser.userId,
-        context.userThreads.get(existingUser.userId) || `${existingUser.userId}-${Date.now()}`,
+        threadId,
       );
 
       sendJson(response, 200, {
         userId: existingUser.userId,
         email: existingUser.email ?? null,
+        threadId,
+        userContext: userContext ?? null,
+        hasContext: Boolean(userContext),
         message: 'Usuário já existente para este email.',
       });
 
