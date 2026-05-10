@@ -5,6 +5,7 @@ import { handleChatRoute } from './chatController.ts';
 import { handleChatInitRoute } from './chatInitController.ts';
 import { sendJson } from './httpUtils.ts';
 import { type AuthenticatedRequest, type ControllerContext } from './types.ts';
+import { config } from '../config.ts';
 
 function isProtectedRoute(method: string, pathname: string, apiBasePath: string): boolean {
   return method === 'POST' && [
@@ -64,7 +65,7 @@ export function createApiController({
       }
 
       let authenticatedRequest: AuthenticatedRequest | undefined;
-      if (isProtectedRoute(method, pathname, context.apiBasePath)) {
+      if (config.auth.validateApiToken && isProtectedRoute(method, pathname, context.apiBasePath)) {
         const accessToken = extractBearerToken(request);
         if (!accessToken) {
           sendJson(response, 401, { error: 'Authorization Bearer token é obrigatório.' });

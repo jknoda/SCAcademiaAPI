@@ -3,6 +3,7 @@ export type ModelConfig = {
   httpReferer: string;
   xTitle: string;
   auth: {
+    validateApiToken: boolean;
     baseUrl: string;
     jwtSecret: string;
     accessExpiresSeconds: number;
@@ -26,14 +27,36 @@ export type ModelConfig = {
 
 };
 
+function parseBooleanEnv(value: string | undefined, defaultValue: boolean): boolean {
+  if (typeof value !== 'string') {
+    return defaultValue;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+
+  if (['0', 'false', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+
+  return defaultValue;
+}
+
 console.assert(process.env.OPENROUTER_API_KEY, 'OPENROUTER_API_KEY is not set in environment variables');
-console.assert(process.env.JWT_SECRET, 'JWT_SECRET is not set in environment variables');
+
+const validateApiToken = parseBooleanEnv(process.env.API_TOKEN_VALIDATION_ENABLED, true);
+if (validateApiToken) {
+  console.assert(process.env.JWT_SECRET, 'JWT_SECRET is not set in environment variables');
+}
 
 export const config: ModelConfig = {
   apiKey: process.env.OPENROUTER_API_KEY!,
   httpReferer: '',
   xTitle: 'IA Devs - Prompt Chaining Article Generator',
   auth: {
+    validateApiToken,
     baseUrl: process.env.AUTH_API_BASE_URL?.trim().replace(/\/$/, '') || '',
     jwtSecret: process.env.JWT_SECRET ?? '',
     accessExpiresSeconds: process.env.JWT_ACCESS_EXPIRES ? parseInt(process.env.JWT_ACCESS_EXPIRES) : 3600,
